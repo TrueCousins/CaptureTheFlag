@@ -1,7 +1,6 @@
 package ctf.agent;
 
 import ctf.common.AgentEnvironment;
-import jdk.nashorn.internal.objects.NativeDataView;
 import ctf.agent.Agent;
 import ctf.common.AgentAction;
 
@@ -18,10 +17,10 @@ public class miv140130Agent extends Agent {
     static int whoAmI; //1 is north pawn, 2 is south pawn
     static int pawn2Turn = 0;
 
-    static int pawn1xPos;
-    static int pawn1yPos;
-    static int pawn2xPos;
-    static int pawn2yPos;
+    static int pawn1Row;
+    static int pawn1Col;
+    static int pawn2Row;
+    static int pawn2Col;
     
     static char gameMap[][];
         
@@ -45,7 +44,6 @@ public class miv140130Agent extends Agent {
                 return AgentAction.MOVE_SOUTH;
             } // end if
             else { // whoAmI == 2
-                whoAmI = 1;
                 
                 if(inEnvironment.isFlagNorth(inEnvironment.OUR_TEAM, true)) {
                     mapSize = 2 * (pawn2Turn + 2);
@@ -73,21 +71,22 @@ public class miv140130Agent extends Agent {
                         } // end else
                     } //end for
 
-                    pawn1yPos = (mapSize / 2) - 2;
-                    pawn2yPos = (mapSize / 2) + 1;
+                    pawn1Row = (mapSize / 2) - 2;
+                    pawn2Row = (mapSize / 2) + 1;
 
                     if(inEnvironment.isAgentEast(inEnvironment.ENEMY_TEAM, false)) {
-                        pawn1xPos = 0;
-                        pawn2xPos = 0;
+                        pawn1Col = 0;
+                        pawn2Col = 0;
                     } //end if
                     else {
-                        pawn1xPos = (mapSize - 1);
-                        pawn2xPos = (mapSize - 1);
+                        pawn1Col = (mapSize - 1);
+                        pawn2Col = (mapSize - 1);
                     } //end else
 
                     printMap(gameMap);
                 } // end nested if
                 else {
+                    whoAmI = 1;
                     pawn2Turn++;
                     return AgentAction.MOVE_NORTH;
                 } // end nested else
@@ -95,6 +94,88 @@ public class miv140130Agent extends Agent {
         } // end if
 
         /*********************************BEHAVIORS*********************************************/
+
+        boolean northBlocked = false;
+        boolean southBlocked = false;
+        boolean eastBlocked = false;
+        boolean westBlocked = false;
+
+        boolean northBlockByTeam = false;
+        boolean southBlockByTeam = false;
+        boolean eastBlockByTeam = false;
+        boolean westBlockByTeam = false;
+
+        int pawnRow;
+        int pawnCol;
+
+        if(whoAmI == 1) {
+            pawnRow = pawn1Row;
+            pawnCol = pawn1Col;
+        } // end if
+        else {
+            pawnRow = pawn2Row;
+            pawnCol = pawn2Col;
+        } //end else
+
+        // north obstacle check
+        if(inEnvironment.isObstacleNorthImmediate()) {
+            northBlocked = true;
+
+            if(inEnvironment.isAgentNorth(inEnvironment.OUR_TEAM, true) || inEnvironment.isBaseNorth(inEnvironment.OUR_TEAM, true)) 
+                northBlockByTeam = true;
+                
+            if(pawnRow != 0) {
+                if(!northBlockByTeam) 
+                    gameMap[pawnRow - 1][pawnCol] = 'x';
+                else 
+                    gameMap[pawnRow - 1][pawnCol] = 'o';
+            } // end nested if
+        } // end if
+
+        // south obstacle check
+        if(inEnvironment.isObstacleSouthImmediate()) {
+            southBlocked = true;
+
+            if(inEnvironment.isAgentSouth(inEnvironment.OUR_TEAM, true) || inEnvironment.isBaseSouth(inEnvironment.OUR_TEAM, true)) 
+                southBlockByTeam = true;
+                
+            if(pawnRow != (mapSize - 1)) {
+                if(!southBlockByTeam)
+                    gameMap[pawnRow + 1][pawnCol] = 'x';
+                else 
+                    gameMap[pawnRow + 1][pawnCol] = 'o';
+            } // end nested if
+        } // end if
+
+        // east obstacle check
+        if(inEnvironment.isObstacleEastImmediate()) {
+            eastBlocked = true;
+
+            if(inEnvironment.isAgentEast(inEnvironment.OUR_TEAM, true) || inEnvironment.isBaseEast(inEnvironment.OUR_TEAM, true)) 
+                eastBlockByTeam = true;
+                
+            if(pawnCol != (mapSize - 1)) {
+                if(!eastBlockByTeam)
+                    gameMap[pawnRow][pawnCol + 1] = 'x';
+                else 
+                 gameMap[pawnRow][pawnCol + 1] = 'o';
+            } // end nested if
+        } // end if
+
+        // west obstacle check
+        if(inEnvironment.isObstacleWestImmediate()) {
+            westBlocked = true;
+
+            if(inEnvironment.isAgentWest(inEnvironment.OUR_TEAM, true) || inEnvironment.isBaseWest(inEnvironment.OUR_TEAM, true)) 
+                westBlockByTeam = true;
+                
+            if(pawnCol != 0) {
+                if(!westBlockByTeam)
+                    gameMap[pawnRow][pawnCol - 1] = 'x';
+                else 
+                    gameMap[pawnRow][pawnCol - 1] = 'o';
+            } //end if
+        } // end if
 
         if (whoAmI == 1) {
             whoAmI = 2; // change player for next turn
