@@ -208,6 +208,7 @@ public class miv140130Agent extends Agent {
             System.out.print("\n");
         } // end for
     } // end printMap
+
     
     public int defendBase(AgentEnvironment inEnv, boolean baseOnEast) {
 		
@@ -268,6 +269,7 @@ public class miv140130Agent extends Agent {
 		
 	} // end defend
 } // end miv140130Agent 
+
 class Path 
 {
 	int row;
