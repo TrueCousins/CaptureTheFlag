@@ -197,3 +197,43 @@ public class miv140130Agent extends Agent {
         } // end for
     } // end printMap
 } // end miv140130Agent
+
+class Path 
+{
+	int row;
+	int col;
+	Path previous;
+	
+	// *************** CONSTRUCTORS ***************
+	public Path(int argRow, int argCol) {
+		this.row = argRow;
+		this.col = argCol;
+	}
+	
+	// *************** GETTERS ***************
+	public int getRow() {
+		return row;
+	}
+	public int getCol() {
+		return col;
+	}
+	public Path getPrevious(){
+		return previous;
+	}
+	// *************** SETTERS ***************
+	public void setRow(int argX){
+		this.row = argX;
+	}
+	public void setCol(int argY){
+		this.col = argY;
+	}
+	public void setPrevious(Path argP){
+		this.previous = argP;
+	} 
+	
+	// *************** METHODS ***************
+	
+	public boolean isEqual(Path current){
+		return (this.row == current.row) && (this.col == current.col);
+	}
+} // end Path class
