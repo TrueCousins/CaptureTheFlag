@@ -1,7 +1,6 @@
 package ctf.agent;
 
 import ctf.common.AgentEnvironment;
-//import jdk.nashorn.internal.objects.NativeDataView;
 import ctf.agent.Agent;
 import ctf.common.AgentAction;
 
@@ -36,11 +35,10 @@ public class miv140130Agent extends Agent {
 
             if(inEnvironment.isAgentNorth(inEnvironment.OUR_TEAM, false)){
             	whoAmI = 2;
-            }
-                
+            } // end if
             else {
             	whoAmI = 1;
-            }
+            } // send else
              
             if(inEnvironment.isAgentEast(inEnvironment.ENEMY_TEAM, false))
             	baseOnEast = false;
@@ -103,7 +101,7 @@ public class miv140130Agent extends Agent {
                     return AgentAction.MOVE_NORTH;
                 } // end nested else
             } // end else
-} // end if
+        } // end if
 
         /*********************************BEHAVIORS*********************************************/
 
@@ -119,6 +117,40 @@ public class miv140130Agent extends Agent {
         
         int pawnRow;
         int pawnCol;
+
+        // reset check
+        if(baseOnEast) {
+            if(whoAmI == 1 && inEnvironment.isObstacleEastImmediate() && inEnvironment.isObstacleNorthImmediate()) {
+                if(inEnvironment.isBaseSouth(inEnvironment.OUR_TEAM, false) && !inEnvironment.isBaseEast(inEnvironment.OUR_TEAM, false)) {
+                    // reset pawn 1's location
+                    pawn1Row = 0;
+                    pawn1Col = 0;
+                } // end if(2)
+            } // end if(1)
+            if(whoAmI == 2 && inEnvironment.isObstacleEastImmediate() && inEnvironment.isObstacleSouthImmediate()) {
+                if(inEnvironment.isBaseNorth(inEnvironment.OUR_TEAM, false) && !inEnvironment.isBaseEast(inEnvironment.OUR_TEAM, false)) {
+                    // reset pawn 2's location
+                    pawn2Row = mapSize - 1;
+                    pawn2Col = 0;
+                } // end if(2)
+            } // end if(1)
+        } //end if
+        else {
+            if(whoAmI == 1 && inEnvironment.isObstacleWestImmediate() && inEnvironment.isObstacleNorthImmediate()) {
+                if(inEnvironment.isBaseSouth(inEnvironment.OUR_TEAM, false) && !inEnvironment.isBaseWest(inEnvironment.OUR_TEAM, false)) {
+                    // reset pawn 1's location
+                    pawn1Row = 0;
+                    pawn1Col = mapSize - 1;
+                } // end if(2)
+            } // end if(1)
+            if(whoAmI == 2 && inEnvironment.isObstacleEastImmediate() && inEnvironment.isObstacleSouthImmediate()) {
+                if(inEnvironment.isBaseNorth(inEnvironment.OUR_TEAM, false) && !inEnvironment.isBaseWest(inEnvironment.OUR_TEAM, false)) {
+                    // reset pawn 2's location
+                    pawn2Row = mapSize - 1;
+                    pawn2Col = mapSize - 1;
+                } // end if(2)
+            } // end if(1)
+        } //end else
 
         if(whoAmI == 1) {
             pawnRow = pawn1Row;
@@ -187,7 +219,7 @@ public class miv140130Agent extends Agent {
                 else 
                     gameMap[pawnRow][pawnCol - 1] = 'o';
             } //end if
-} // end if
+        } // end if
         
         if (whoAmI == 1) {
             whoAmI = 2; // change player for next turn
