@@ -1,6 +1,7 @@
 package ctf.agent;
 
 import ctf.common.AgentEnvironment;
+//import jdk.nashorn.internal.objects.NativeDataView;
 import ctf.agent.Agent;
 import ctf.common.AgentAction;
 
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 public class miv140130Agent extends Agent {
     static boolean firstTurn = true;
     static boolean mapSizeFound = false;
+    static boolean baseOnEast = true;
 
     static int mapSize;
     static int whoAmI; //1 is north pawn, 2 is south pawn
@@ -21,6 +23,7 @@ public class miv140130Agent extends Agent {
     static int pawn1Col;
     static int pawn2Row;
     static int pawn2Col;
+
     
     static char gameMap[][];
         
@@ -31,10 +34,19 @@ public class miv140130Agent extends Agent {
        
         if(firstTurn) { 
 
-            if(inEnvironment.isAgentNorth(inEnvironment.OUR_TEAM, false))
-                whoAmI = 2;
-            else 
-                whoAmI = 1;
+            if(inEnvironment.isAgentNorth(inEnvironment.OUR_TEAM, false)){
+            	whoAmI = 2;
+            }
+                
+            else {
+            	whoAmI = 1;
+            }
+             
+            if(inEnvironment.isAgentEast(inEnvironment.ENEMY_TEAM, false))
+            	baseOnEast = false;
+            else
+            	baseOnEast = true;
+            
             firstTurn = false;
         } //end if
         
@@ -91,7 +103,7 @@ public class miv140130Agent extends Agent {
                     return AgentAction.MOVE_NORTH;
                 } // end nested else
             } // end else
-        } // end if
+} // end if
 
         /*********************************BEHAVIORS*********************************************/
 
@@ -99,12 +111,12 @@ public class miv140130Agent extends Agent {
         boolean southBlocked = false;
         boolean eastBlocked = false;
         boolean westBlocked = false;
-
+        
         boolean northBlockByTeam = false;
         boolean southBlockByTeam = false;
         boolean eastBlockByTeam = false;
         boolean westBlockByTeam = false;
-
+        
         int pawnRow;
         int pawnCol;
 
@@ -175,15 +187,16 @@ public class miv140130Agent extends Agent {
                 else 
                     gameMap[pawnRow][pawnCol - 1] = 'o';
             } //end if
-        } // end if
-
+} // end if
+        
         if (whoAmI == 1) {
             whoAmI = 2; // change player for next turn
-            
+             
         } // end else
         else {
             whoAmI = 1;  // change player for next turn
-           
+            System.out.println("Defending base");
+            return defendBase(inEnvironment, baseOnEast);
         } // end else
         return 1;
     } // end getMove
@@ -192,8 +205,106 @@ public class miv140130Agent extends Agent {
         for(int i = 0; i < mapSize; i++) {
             for(int j = 0; j < mapSize; j++) 
                 System.out.print(gameMap[i][j]);
-            
             System.out.print("\n");
         } // end for
     } // end printMap
-} // end miv140130Agent
+    
+    public int defendBase(AgentEnvironment inEnv, boolean baseOnEast) {
+		
+		AgentAction doThis = new AgentAction();
+		int move = 0;
+		
+		// If an opponent is directly west or east of us, then do nothing
+		if(baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false))
+			return doThis.DO_NOTHING;
+		if(!baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false))
+			return doThis.DO_NOTHING;
+		
+		// If they have the flag
+		if(inEnv.hasFlag(inEnv.ENEMY_TEAM)){
+			
+			// If the enemy is directly in front of us then chase them
+			if(baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && !inEnv.isObstacleWestImmediate())
+				return doThis.MOVE_WEST;
+			if(!baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && !inEnv.isObstacleEastImmediate())
+				return doThis.MOVE_EAST;
+			
+			// If we are blocked from West and North or from South
+			else if (baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && inEnv.isObstacleWestImmediate() && inEnv.isObstacleNorthImmediate())
+				return doThis.MOVE_SOUTH;
+			else if (baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && inEnv.isObstacleWestImmediate() && inEnv.isObstacleSouthImmediate())
+				return doThis.MOVE_NORTH;
+			
+			// If we are blocked from East and North or South
+			else if (baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && inEnv.isObstacleWestImmediate() && inEnv.isObstacleNorthImmediate())
+				return doThis.MOVE_SOUTH;
+			else if (!baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && inEnv.isObstacleWestImmediate() && inEnv.isObstacleNorthImmediate())
+				return doThis.MOVE_NORTH;
+			else{}
+			
+			
+			if(baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && !inEnv.isObstacleNorthImmediate())
+				return doThis.MOVE_NORTH;
+			else if(baseOnEast && !inEnv.isAgentWest(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isObstacleSouthImmediate())
+				return doThis.MOVE_SOUTH;
+			else if (!baseOnEast && inEnv.isAgentEast(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false)&& !inEnv.isObstacleNorthImmediate())
+				return doThis.MOVE_NORTH;
+			else if (!baseOnEast && !inEnv.isAgentEast(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isObstacleSouthImmediate())
+				return doThis.MOVE_SOUTH;
+			else {};
+		}
+		
+		if(baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && !inEnv.isObstacleNorthImmediate())
+			return doThis.MOVE_NORTH;
+		else if(baseOnEast && !inEnv.isAgentWest(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isObstacleSouthImmediate())
+			return doThis.MOVE_SOUTH;
+		else if (!baseOnEast && inEnv.isAgentEast(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false)&& !inEnv.isObstacleNorthImmediate())
+			return doThis.MOVE_NORTH;
+		else if (!baseOnEast && !inEnv.isAgentEast(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isObstacleSouthImmediate())
+			return doThis.MOVE_SOUTH;
+		else
+			return doThis.DO_NOTHING;
+		
+		
+	} // end defend
+} // end miv140130Agent 
+class Path 
+{
+	int row;
+	int col;
+	Path previous;
+	
+	// *************** CONSTRUCTORS ***************
+	public Path(int argRow, int argCol) {
+		this.row = argRow;
+		this.col = argCol;
+	}
+	
+	// *************** GETTERS ***************
+	public int getRow() {
+		return row;
+	}
+	public int getCol() {
+		return col;
+	}
+	public Path getPrevious(){
+		return previous;
+	}
+	// *************** SETTERS ***************
+	public void setRow(int argX){
+		this.row = argX;
+	}
+	public void setCol(int argY){
+		this.col = argY;
+	}
+	public void setPrevious(Path argP){
+		this.previous = argP;
+	} 
+	
+	// *************** METHODS ***************
+	
+	public boolean isEqual(Path current){
+		return (this.row == current.row) && (this.col == current.col);
+	}
+
+} // end Path class
