@@ -1,12 +1,14 @@
 package ctf.agent;
 
 import ctf.common.AgentEnvironment;
+import jdk.nashorn.internal.ir.ReturnNode;
 import ctf.agent.Agent;
 import ctf.common.AgentAction;
 
 import java.util.Random;
 import java.util.Stack;
 import java.util.List;
+import java.net.NoRouteToHostException;
 import java.util.ArrayList;
 
 public class miv140130Agent extends Agent {
@@ -25,6 +27,8 @@ public class miv140130Agent extends Agent {
 
     
     static char gameMap[][];
+
+    List<Character> pawn1Moves = new ArrayList<>();
         
     //Stack<pathObj> pawn1Moves = new Stack<>();
     //Stack<pathObj> pawn2Moves = new Stack<>();
@@ -223,6 +227,8 @@ public class miv140130Agent extends Agent {
         
         if (whoAmI == 1) {
             whoAmI = 2; // change player for next turn
+            System.out.println("Pawn 1 is attacking");
+            return getFlag(inEnvironment, baseOnEast, northBlocked, southBlocked, eastBlocked, westBlocked);
              
         } // end else
         else {
@@ -230,7 +236,6 @@ public class miv140130Agent extends Agent {
             System.out.println("Defending base");
             return defendBase(inEnvironment, baseOnEast);
         } // end else
-        return 1;
     } // end getMove
 
     public void printMap(char gameMap[][]) {
@@ -241,6 +246,294 @@ public class miv140130Agent extends Agent {
         } // end for
     } // end printMap
 
+    public int getFlag(AgentEnvironment inEnv, boolean baseOnEast, boolean northBlocked, boolean southBlocked, boolean eastBlocked, boolean westBlocked) {
+
+        AgentAction doThis = new AgentAction();
+
+        StringBuilder str = new StringBuilder(200);
+
+        // these check to see if the pawn has gotten stuck in a back-and-forth pattern
+        boolean SN = false;
+        boolean NS = false;
+        boolean EW = false;
+        boolean WE = false;
+
+        if(!pawn1Moves.isEmpty()) {
+            for(char s : pawn1Moves) 
+                str.append(s);
+            
+            String check = str.toString();
+            str = new StringBuilder(200);
+
+            if(check.contains("NSNS")) // stuck moving north and south
+                NS = true;
+            else if(check.contains("SNSN")) // stuck moving south and north
+                SN = true;
+            else if(check.contains("EWEW")) // stuck moving east and west
+                EW = true;
+            else if(check.contains("WEWE")) //stuck moving west and east
+                WE = true;
+            else { } // do nothing
+        } // end if
+
+        if(NS) {
+            gameMap[pawn1Row - 1][pawn1Col] = '#';
+            gameMap[pawn1Row][pawn1Col] = '#';
+
+            for(int i = 0; i < 4; i++) // remove last 4 moves from list as we are undoing the loop
+                pawn1Moves.remove(pawn1Moves.size() - 1);
+            
+            pawn1Row++;
+            pawn1Moves.add('S');
+            return doThis.MOVE_SOUTH;
+        } // end if
+
+        if(SN) {
+            gameMap[pawn1Row + 1][pawn1Col] = '#';
+            gameMap[pawn1Row][pawn1Col] = '#';
+
+            for(int i = 0; i < 4; i++) // remove last 4 moves from list as we are undoing the loop
+                pawn1Moves.remove(pawn1Moves.size() - 1);
+            
+            pawn1Row--;
+            pawn1Moves.add('N');
+            return doThis.MOVE_NORTH;
+        } // end if    
+
+        if(EW) {
+            gameMap[pawn1Row][pawn1Col + 1] = '#';
+            gameMap[pawn1Row][pawn1Col] = '#';
+
+            for(int i = 0; i < 4; i++) // remove last 4 moves from list as we are undoing the loop
+                pawn1Moves.remove(pawn1Moves.size() - 1);
+
+            pawn1Col--;
+            pawn1Moves.add('W');
+            return doThis.MOVE_WEST;
+        } // end if
+
+        if(WE) {
+            gameMap[pawn1Row][pawn1Col - 1] = '#';
+            gameMap[pawn1Row][pawn1Col] = '#';
+
+            for(int i = 0; i < 4; i++) // remove last 4 moves from list as we are undoing the loop
+                pawn1Moves.remove(pawn1Moves.size() - 1);
+            
+            pawn1Col++;
+            pawn1Moves.add('E');
+            return doThis.MOVE_EAST;
+        } // end if
+
+         // check to see if on a dead end path
+         if(!northBlocked) {
+             if(southBlocked && eastBlocked && gameMap[pawn1Row][pawn1Col -1] == '#') {
+                 gameMap[pawn1Row][pawn1Col] = '#';
+
+                 pawn1Row--;
+                 pawn1Moves.add('N');
+                 return doThis.MOVE_NORTH; // going west is a dead end- back out
+             } //end if
+             if(southBlocked && gameMap[pawn1Row][pawn1Col +1] == '#' && westBlocked) {
+                 gameMap[pawn1Row][pawn1Col] = '#';
+
+                 pawn1Row--;
+                 pawn1Moves.add('N');
+                 return doThis.MOVE_NORTH; // going east is a dead end- back out
+             } //end if
+             if(gameMap[pawn1Row +1][pawn1Col] == '#' && eastBlocked && westBlocked) {
+                 gameMap[pawn1Row][pawn1Col] = '#';
+
+                 pawn1Row--;
+                 pawn1Moves.add('N');
+                 return doThis.MOVE_NORTH; // going south is a dead end- back out
+             } //end if
+         } // end if
+
+         if(!southBlocked) {
+             if(northBlocked && eastBlocked && gameMap[pawn1Row][pawn1Col -1] == '#') {
+                 gameMap[pawn1Row][pawn1Col] = '#';
+
+                 pawn1Row++;
+                 pawn1Moves.add('S');
+                 return doThis.MOVE_SOUTH; // going west is a dead end- back out
+             } //end if
+             if(northBlocked && gameMap[pawn1Row][pawn1Col +1] == '#' && westBlocked) {
+                 gameMap[pawn1Row][pawn1Col] = '#';
+
+                 pawn1Row++;
+                 pawn1Moves.add('S');
+                 return doThis.MOVE_SOUTH; // going east is a dead end- back out
+             } //end if
+             if(gameMap[pawn1Row -1][pawn1Col] == '#' && eastBlocked && westBlocked) {
+                 gameMap[pawn1Row][pawn1Col] = '#';
+
+                 pawn1Row++;
+                 pawn1Moves.add('S');
+                 return doThis.MOVE_SOUTH; // going north is a dead end- back out
+             } //end if
+         } // end if
+
+         if(!eastBlocked) {
+             if(northBlocked && southBlocked && gameMap[pawn1Row][pawn1Col -1] == '#') {
+                 gameMap[pawn1Row][pawn1Col] = '#';
+
+                 pawn1Col++;
+                 pawn1Moves.add('E');
+                 return doThis.MOVE_EAST; // going west is a dead end- back out
+             } //end if
+             if(northBlocked && gameMap[pawn1Row +1][pawn1Col] == '#' && westBlocked) {
+                 gameMap[pawn1Row][pawn1Col] = '#';
+
+                 pawn1Col++;
+                 pawn1Moves.add('E');
+                 return doThis.MOVE_EAST; // going south is a dead end- back out
+             } //end if
+             if(gameMap[pawn1Row -1][pawn1Col] == '#' && eastBlocked && westBlocked) {
+                 gameMap[pawn1Row][pawn1Col] = '#';
+
+                 pawn1Col++;
+                 pawn1Moves.add('E');
+                 return doThis.MOVE_EAST; // going north is a dead end- back out
+             } //end if
+         } // end if
+
+         if(!westBlocked) {
+             if(northBlocked && southBlocked && gameMap[pawn1Row][pawn1Col +1] == '#') {
+                 gameMap[pawn1Row][pawn1Col] = '#';
+
+                 pawn1Col--;
+                 pawn1Moves.add('W');
+                 return doThis.MOVE_WEST; // going east is a dead end- back out
+             } //end if
+             if(northBlocked && gameMap[pawn1Row +1][pawn1Col] == '#' && eastBlocked) {
+                 gameMap[pawn1Row][pawn1Col] = '#';
+
+                 pawn1Col--;
+                 pawn1Moves.add('W');
+                 return doThis.MOVE_WEST; // going south is a dead end- back out
+             } //end if
+             if(gameMap[pawn1Row -1][pawn1Col] == '#' && eastBlocked && eastBlocked) {
+                 gameMap[pawn1Row][pawn1Col] = '#';
+
+                 pawn1Col--;
+                 pawn1Moves.add('W');
+                 return doThis.MOVE_WEST; // going north is a dead end- back out
+             } //end if
+         } // end if
+
+        //  movement if pawn has the flag
+        if(inEnv.hasFlag()) {
+            if(baseOnEast) {
+                if(pawn1Col == mapSize -1) { // pawn in on his home side
+                    if(inEnv.isBaseNorth(inEnv.OUR_TEAM, false)) {
+                        pawn1Row--;
+                        pawn1Moves.add('N');
+                        return doThis.MOVE_NORTH;
+                    } // end if(3)
+                    else {
+                        pawn1Row++;
+                        pawn1Moves.add('S');
+                        return doThis.MOVE_SOUTH;
+                    } // end else
+                } //end if(2)
+
+                // pawn is somewhere between goals 
+                if(!eastBlocked && !inEnv.isAgentEast(inEnv.ENEMY_TEAM, true)) { // move east
+                    pawn1Col++;
+                    pawn1Moves.add('E');
+                    return doThis.MOVE_EAST;
+                } // end if(2)
+                if(!southBlocked && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, true)) { // move north
+                    pawn1Row++;
+                    pawn1Moves.add('S');
+                    return doThis.MOVE_SOUTH;
+                } // end if(2)
+                if(!northBlocked && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, true)) { // move south
+                    pawn1Row--;
+                    pawn1Moves.add('N');
+                    return doThis.MOVE_NORTH;
+                }
+                if(!westBlocked && !inEnv.isAgentWest(inEnv.ENEMY_TEAM, true)) { // move west as last resort 
+                    pawn1Col--;
+                    pawn1Moves.add('W');
+                    return doThis.MOVE_WEST;
+                } // end if(1)
+
+                return doThis.DO_NOTHING; //blocked- wait for a pawn to move
+            } // end if(1)
+            else {
+                if(pawn1Col == 0) { // pawn on home column
+                    if(inEnv.isBaseNorth(inEnv.OUR_TEAM, false)) {
+                        pawn1Row--;
+                        pawn1Moves.add('N');
+                        return doThis.MOVE_NORTH;
+                    } // end if(3)
+                    else {
+                        pawn1Row++;
+                        pawn1Moves.add('S');
+                        return doThis.MOVE_SOUTH;
+                    } // end else
+                } //end if(2)
+
+                // pawn is somewhere between goals
+                if(!westBlocked && !inEnv.isAgentWest(inEnv.ENEMY_TEAM, true)) { // move west
+                    pawn1Col--;
+                    pawn1Moves.add('W');
+                    return doThis.MOVE_WEST;
+                } // end if(1)
+                if(!southBlocked && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, true)) { // move north
+                    pawn1Row++;
+                    pawn1Moves.add('S');
+                    return doThis.MOVE_SOUTH;
+                } // end if(2)
+                if(!northBlocked && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, true)) { // move south
+                    pawn1Row--;
+                    pawn1Moves.add('N');
+                    return doThis.MOVE_NORTH;
+                } //end if(2)
+                if(!eastBlocked && !inEnv.isAgentEast(inEnv.ENEMY_TEAM, true)) { // move east as last resort
+                    pawn1Col++;
+                    pawn1Moves.add('E');
+                    return doThis.MOVE_EAST;
+                } // end if(2)
+
+                return doThis.DO_NOTHING; //blocked- wait for a pawn to move
+            } //end else
+
+        } // end if
+
+        // movement if on opponents side
+        
+
+        // determine default movement
+        boolean safeMoveNorth = false;
+        boolean safeMoveSouth = false;
+        boolean safeMoveEast = false;
+        boolean safeMoveWest = false;
+
+        if(!northBlocked && gameMap[pawn1Row -1][pawn1Col] != '#') 
+            safeMoveNorth = true;
+        if(!southBlocked && gameMap[pawn1Row +1][pawn1Col] != '#')
+            safeMoveSouth = true;
+        if(!eastBlocked && gameMap[pawn1Row][pawn1Col + 1] != '#')
+            safeMoveEast = true;
+        if(!westBlocked && gameMap[pawn1Row][pawn1Col - 1] != '#')
+            safeMoveWest = true;
+
+        // randomly choose movement(while preferring to move towards opponent goal)
+        double northChance = 0;
+        double southChance = 0;
+        double eastChance = 0;
+        double westChance = 0;
+
+        if(baseOnEast && safeMoveEast && inEnv.isAgentEast(inEnv.OUR_TEAM, true))
+            eastChance = .5;
+        if(!baseOnEast && safeMoveWest && inEnv.isAgentWest(inEnv.OUR_TEAM, true))
+            westChance = .5;
+            
+
+            return 1; //needed so the compiler doesn't get mad
+    } // end getFlag
     
     public int defendBase(AgentEnvironment inEnv, boolean baseOnEast) {
 		
