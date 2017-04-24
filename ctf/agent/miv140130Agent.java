@@ -535,40 +535,52 @@ public class miv140130Agent extends Agent {
             return 1; //needed so the compiler doesn't get mad
     } // end getFlag
     
-    public int defendBase(AgentEnvironment inEnv, boolean baseOnEast) {
+     public int defendBase(AgentEnvironment inEnv, boolean baseOnEast) {
 		
 		AgentAction doThis = new AgentAction();
 		int move = 0;
 		
-		// If an opponent is directly west or east of us, then do nothing
-		if(baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false))
-			return doThis.DO_NOTHING;
-		if(!baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false))
-			return doThis.DO_NOTHING;
-		
-		// If they have the flag
+		// If they have the flag 
 		if(inEnv.hasFlag(inEnv.ENEMY_TEAM)){
 			
-			// If the enemy is directly in front of us then chase them
+			// If the enemy is in front of the defender then attack them
+			if(inEnv.isAgentNorth(inEnv.ENEMY_TEAM, true)){
+				return doThis.MOVE_NORTH;
+			}
+			if(inEnv.isAgentSouth(inEnv.ENEMY_TEAM, true))
+				return doThis.MOVE_SOUTH;
+			if(inEnv.isAgentWest(inEnv.ENEMY_TEAM, true))
+				return doThis.MOVE_WEST;
+			if(inEnv.isAgentEast(inEnv.ENEMY_TEAM, true))
+				return doThis.MOVE_EAST;
+			
+			
+			// If the enemy is directly west or east in front of us then chase them with no obstacles
 			if(baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && !inEnv.isObstacleWestImmediate())
 				return doThis.MOVE_WEST;
 			if(!baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && !inEnv.isObstacleEastImmediate())
 				return doThis.MOVE_EAST;
 			
-			// If we are blocked from West and North or from South
-			else if (baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && inEnv.isObstacleWestImmediate() && inEnv.isObstacleNorthImmediate())
+			// If the enemy is directly north or south in front of us then chase them with no obstacles
+			if(baseOnEast && inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentWest(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentEast(inEnv.ENEMY_TEAM, false) && !inEnv.isObstacleNorthImmediate())
+				return doThis.MOVE_NORTH;
+			if(!baseOnEast && inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentWest(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentEast(inEnv.ENEMY_TEAM, false) && !inEnv.isObstacleSouthImmediate())
 				return doThis.MOVE_SOUTH;
-			else if (baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && inEnv.isObstacleWestImmediate() && inEnv.isObstacleSouthImmediate())
+			
+			// If they are directly in front of us and we are blocked from West and (North or South), then move north or south
+			if (baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && inEnv.isObstacleWestImmediate() && (inEnv.isObstacleNorthImmediate() || inEnv.isBaseNorth(inEnv.OUR_TEAM, true)))
+				return doThis.MOVE_SOUTH;
+			if (baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && inEnv.isObstacleWestImmediate() && (inEnv.isObstacleSouthImmediate() || inEnv.isBaseSouth(inEnv.OUR_TEAM, true)))
 				return doThis.MOVE_NORTH;
 			
-			// If we are blocked from East and North or South
-			else if (baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && inEnv.isObstacleWestImmediate() && inEnv.isObstacleNorthImmediate())
+			// If they are directly in front of us and  we are blocked from East and North or South
+			if (!baseOnEast && inEnv.isAgentEast(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && inEnv.isObstacleWestImmediate() && (inEnv.isObstacleNorthImmediate() || inEnv.isBaseNorth(inEnv.OUR_TEAM, true)))
 				return doThis.MOVE_SOUTH;
-			else if (!baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && inEnv.isObstacleWestImmediate() && inEnv.isObstacleNorthImmediate())
+			if (!baseOnEast && inEnv.isAgentEast(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && inEnv.isObstacleWestImmediate() && (inEnv.isObstacleSouthImmediate() || inEnv.isBaseSouth(inEnv.OUR_TEAM, true)))
 				return doThis.MOVE_NORTH;
-			else{}
 			
 			
+			/*
 			if(baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && !inEnv.isObstacleNorthImmediate())
 				return doThis.MOVE_NORTH;
 			else if(baseOnEast && !inEnv.isAgentWest(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isObstacleSouthImmediate())
@@ -577,21 +589,128 @@ public class miv140130Agent extends Agent {
 				return doThis.MOVE_NORTH;
 			else if (!baseOnEast && !inEnv.isAgentEast(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isObstacleSouthImmediate())
 				return doThis.MOVE_SOUTH;
-			else {};
+			else {};*/
 		}
 		
-		if(baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && !inEnv.isObstacleNorthImmediate())
+		//************************** ENEMY HAS NO FLAG ************************************************
+		
+		/* PRIORITY #1: If an enemy is IMMEDIATELY in front of me
+		 * GOAL: 		Attack them
+		 */
+		if(inEnv.isAgentNorth(inEnv.ENEMY_TEAM, true)) {
+			//gameMap[pawnRow + 1][pawnCol] = 'x';
 			return doThis.MOVE_NORTH;
-		else if(baseOnEast && !inEnv.isAgentWest(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isObstacleSouthImmediate())
+		}
+		if(inEnv.isAgentSouth(inEnv.ENEMY_TEAM, true))
 			return doThis.MOVE_SOUTH;
-		else if (!baseOnEast && inEnv.isAgentEast(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false)&& !inEnv.isObstacleNorthImmediate())
+		if(inEnv.isAgentWest(inEnv.ENEMY_TEAM, true))
+			return doThis.MOVE_WEST;
+		if(inEnv.isAgentEast(inEnv.ENEMY_TEAM, true))
+			return doThis.MOVE_EAST;
+		
+		/* PRIORITY #2: If an enemy is DIRECTLY NORTH or SOUTH of me 
+		 * 						- There are NO obstacles
+		 * 
+		 * Goal: 		If there is an enemy, North or South of me, then get them and attack. Get rid of them
+		 */
+		if(inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentWest(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentEast(inEnv.ENEMY_TEAM, false) && !inEnv.isObstacleNorthImmediate())
 			return doThis.MOVE_NORTH;
-		else if (!baseOnEast && !inEnv.isAgentEast(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isObstacleSouthImmediate())
+		if(inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentEast(inEnv.ENEMY_TEAM, false) && !inEnv.isObstacleSouthImmediate())
 			return doThis.MOVE_SOUTH;
-		else
+		
+		/* PRIORITY #2.2: If an enemy is DIRECTLY NORTH or SOUTH of me 
+		 * 						- YES, obstacles
+		 * 
+		 * Goal: 		If there is an enemy, North or South of me, then get them and attack. Get rid of them
+		 */
+		if(inEnv.isObstacleNorthImmediate() || inEnv.isAgentNorth(inEnv.OUR_TEAM, true) || inEnv.isBaseNorth(inEnv.OUR_TEAM, true)){
+			if(inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentWest(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentEast(inEnv.ENEMY_TEAM, false) && !inEnv.isObstacleNorthImmediate()){
+				if(!inEnv.isObstacleEastImmediate() || !inEnv.isAgentEast(inEnv.OUR_TEAM, true) || !inEnv.isBaseEast(inEnv.OUR_TEAM, true))
+					return doThis.MOVE_EAST;
+				if(!inEnv.isObstacleWestImmediate() || !inEnv.isAgentWest(inEnv.OUR_TEAM, true) || !inEnv.isBaseWest(inEnv.OUR_TEAM, true))
+					return doThis.MOVE_WEST;
+			} // end if North only
+		}// end if obstacles North
+		if(inEnv.isObstacleSouthImmediate() || inEnv.isAgentSouth(inEnv.OUR_TEAM, true) || inEnv.isBaseSouth(inEnv.OUR_TEAM, true)){
+			if(inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentWest(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentEast(inEnv.ENEMY_TEAM, false) && !inEnv.isObstacleNorthImmediate()){
+				if(!inEnv.isObstacleEastImmediate() || !inEnv.isAgentEast(inEnv.OUR_TEAM, true) || !inEnv.isBaseEast(inEnv.OUR_TEAM, true))
+					return doThis.MOVE_EAST;
+				if(!inEnv.isObstacleWestImmediate() || !inEnv.isAgentWest(inEnv.OUR_TEAM, true) || !inEnv.isBaseWest(inEnv.OUR_TEAM, true))
+					return doThis.MOVE_WEST;
+			} // end South only
+		} // end if obstacles South
+		
+		/* PRIORITY #3: If an enemy is NW or NE of me
+		 * 					- NO obstacles NORTH of me, then go North
+		 * 					- Obstacles = teammates, actual obstacles, or our base
+		 * 
+		 * GOAL:		Get closer to the enemy where you are directly in front of them. If enemy is North of you, then go North
+		 */
+		if(!inEnv.isObstacleNorthImmediate() && !inEnv.isAgentNorth(inEnv.OUR_TEAM, true) && !inEnv.isBaseNorth(inEnv.OUR_TEAM, true)){
+			if(baseOnEast && inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentWest(inEnv.ENEMY_TEAM, false))
+				return doThis.MOVE_NORTH;
+			if(!baseOnEast && inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentEast(inEnv.ENEMY_TEAM, false))
+				return doThis.MOVE_NORTH;
+		}
+		
+		/*
+		 * PRIORITY #3.2: If an enemy is NW or NE of me
+		 * 					- YES, there is an obstacle North of me
+		 * 
+		 * GOAL:		Get around that obstacle and line up with enemy
+		 */
+		if(inEnv.isObstacleNorthImmediate() || inEnv.isAgentNorth(inEnv.OUR_TEAM, true) || inEnv.isBaseNorth(inEnv.OUR_TEAM, true)){		// If there are obstacles north
+			if(!inEnv.isObstacleWestImmediate() || !inEnv.isAgentWest(inEnv.OUR_TEAM, true) || !inEnv.isBaseWest(inEnv.OUR_TEAM, true)){	// If there are no obstacles west
+				if(baseOnEast && inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentWest(inEnv.ENEMY_TEAM, false))					// If enemy is NW of me
+					return doThis.MOVE_WEST;
+			}
+			if(!inEnv.isObstacleEastImmediate() || !inEnv.isAgentEast(inEnv.OUR_TEAM, true) || !inEnv.isBaseEast(inEnv.OUR_TEAM, true)){	// If thre are no obstacles EAST
+				if(!baseOnEast && inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentEast(inEnv.ENEMY_TEAM, false))					// If enemy is NE of me
+					return doThis.MOVE_EAST;
+			}
+		}
+		
+		/* PRIORITY #4: If an enemy is SW or SE of me
+		 * 						- NO obstacles SOUTH of me, then go SOUTH
+		 * 						- Obstacles = teammates, actual obstacles, or our base
+		 * 
+		 * GOAL:			Get closer to the enemy where you are directly in front of them. If enemy is SOUTH of me, then go SOUTH
+		 */
+		if(!inEnv.isObstacleSouthImmediate() && !inEnv.isAgentSouth(inEnv.OUR_TEAM, true) && !inEnv.isBaseSouth(inEnv.OUR_TEAM,  true)){
+			if(baseOnEast && inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentWest(inEnv.ENEMY_TEAM, false))
+				return doThis.MOVE_SOUTH;
+			if(!baseOnEast && inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentEast(inEnv.ENEMY_TEAM, false))
+				return doThis.MOVE_SOUTH;
+		}
+		
+		/* PRIORITY #4.2: If an enemy is SW or SE of me
+		 * 					- YES there is an obstacle Sorth of me
+		 * 
+		 * GOAL:		Get around that obstacle and line up with enemy
+		 */
+		if(inEnv.isObstacleSouthImmediate() || inEnv.isAgentSouth(inEnv.OUR_TEAM, true) || inEnv.isBaseSouth(inEnv.OUR_TEAM, true)){		// If there are obstacles SOUTH
+			if(!inEnv.isObstacleWestImmediate() || !inEnv.isAgentWest(inEnv.OUR_TEAM, true) || !inEnv.isBaseWest(inEnv.OUR_TEAM, true)){	// If there are no obstacles WEST
+				if(baseOnEast && inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentWest(inEnv.ENEMY_TEAM, false))					// If enemy is SW of me
+					return doThis.MOVE_WEST;
+			}
+			if(!inEnv.isObstacleEastImmediate() || !inEnv.isAgentEast(inEnv.OUR_TEAM, true) || !inEnv.isBaseEast(inEnv.OUR_TEAM, true)){	// If thre are no obstacles EAST
+				if(!baseOnEast && inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false)&& inEnv.isAgentEast(inEnv.ENEMY_TEAM, false))					// If enemy is SE of me
+					return doThis.MOVE_EAST;
+			}
+		}
+		
+		/* PRIORITY #5:		If an enemy is DIRECTLY WEST or EAST of me
+		 * 
+		 * GOAL:			Do nothing. We want to line up directly with an enemy. Hold your ground
+		 * 
+		 */
+		if(baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false))
+			return doThis.DO_NOTHING;
+		if(!baseOnEast && inEnv.isAgentWest(inEnv.ENEMY_TEAM, false) && !inEnv.isAgentSouth(inEnv.ENEMY_TEAM, false)&& !inEnv.isAgentNorth(inEnv.ENEMY_TEAM, false))
 			return doThis.DO_NOTHING;
 		
-		
+		// LAST PRIORITY: do nothing
+		return doThis.DO_NOTHING;
 	} // end defend
 } // end miv140130Agent 
 
